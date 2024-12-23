@@ -35,7 +35,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   hive_multiisolate: ^1.3.2
-  image: ^4.3.0
+  image: ^4.5.2
   image_gallery_saver_plus: ^3.0.5
   #image_picker: ^1.1.2
   jwt_decoder: ^2.0.1
