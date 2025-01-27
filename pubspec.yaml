@@ -54,7 +54,7 @@ dependencies:
   permission_handler: ^11.3.1
   provider: ^6.1.2
   share_plus: ^10.1.4
-  shared_preferences: ^2.3.3
+  shared_preferences: ^2.4.0
   smooth_page_indicator: ^1.2.0+3
   #socks5_proxy: ^2.0.0
   tutorial_coach_mark: ^1.2.12
