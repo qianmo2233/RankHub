@@ -1,4 +1,8 @@
-# RankHub
+<div style="white-space: nowrap; display:inline; overflow-x: auto; white-space: nowrap;">
+  <img src="https://github.com/user-attachments/assets/957d9a84-e81e-4d67-8b9e-50c2149c3ae0" alt="playstore-icon" width="64" height="64" style="display: inline-block;">
+  <h1 style="display: inline-block;">RankHub</h1>
+</div>
+
 >**25.2.18 更新**
 >
 >目前正在着手进行对 MuseDash(喵斯快跑) 的支持，一方面是想写点新东西了，另一方面是一直写 mai 一个相关的东西，很多地方耦合性有点强了，做一下解耦。
@@ -24,6 +28,9 @@
 待项目重构后，未来有计划打造一个音游查分聚合平台（幻想）。
 
 你可以在 [这里](https://github.com/qianmo2233/RankHub/actions/workflows/build_app.yml) 下载最新的构建（包括 Android & iOS）（iOS 端需自行签名后安装）
+
+> 25.2.19 通知：目前 Android 平台因 [这个问题](https://github.com/mafreud/gallery_saver_plus/issues/7) 暂时无法构建，有需要的可以参考 [这个 PR](https://github.com/mafreud/gallery_saver_plus/pull/8) 自行修复后构建。
+
 > ~vivo 688 我上架 TestFight 和 AppStore，以及添加更多功能~
 
 > [!WARNING]
