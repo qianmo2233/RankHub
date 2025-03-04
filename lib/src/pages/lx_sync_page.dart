@@ -12,6 +12,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:native_flutter_proxy/native_proxy_reader.dart';
 import 'package:rank_hub/src/pages/lx_login_page.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 class LxSyncPage extends StatefulWidget {
   const LxSyncPage({super.key});
@@ -253,12 +254,27 @@ class _LxSyncPageState extends State<LxSyncPage> {
   }
 
   void _goToSystemWifiSettings() async {
-    const url = "App-Prefs:root=WIFI";
-    if (await canLaunchUrlString(url)) {
-      await launchUrlString(url);
-    } else {
+    failToOpenSystemWifiSettings() => {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("无法打开系统WiFi设置")));
+          .showSnackBar(SnackBar(content: Text("无法打开系统WiFi设置")))
+    };
+
+    const IOSUrl = "App-Prefs:root=WIFI";
+    const AndroidIntent intent = AndroidIntent(action: "android.settings.WIFI_SETTINGS");
+    if (Platform.isAndroid) {
+      try {
+        await intent.launch();
+      } catch (e) {
+        failToOpenSystemWifiSettings();
+      }
+    } else if (Platform.isIOS) {
+      try {
+        await launchUrlString(IOSUrl);
+      } catch (e) {
+        failToOpenSystemWifiSettings();
+      }
+    } else {
+      failToOpenSystemWifiSettings();
     }
   }
 
