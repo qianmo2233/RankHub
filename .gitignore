@@ -44,6 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android build intermediate C/C++ files
+/android/app/.cxx
 
 #Keystore
 release-keystore.jks
