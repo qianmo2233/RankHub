@@ -14,17 +14,35 @@ class LxB50ExportView extends StatelessWidget {
 
   final GlobalKey combinedKey = GlobalKey();
 
-  Future<void> _saveToGallery(Uint8List pngBytes) async {
-    final result = await ImageGallerySaverPlus.saveImage(
-      Uint8List.fromList(pngBytes),
-      quality: 100,
-      name: "B15_B35_Scores",
-    );
-    print("Image saved to gallery: $result");
+  Future<void> _saveToGallery(Uint8List pngBytes, BuildContext context) async {
+    try {
+      final currentTime = () {
+        DateTime now = DateTime.now();
+        return "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}";
+      }();
+      final result = await ImageGallerySaverPlus.saveImage(
+        Uint8List.fromList(pngBytes),
+        quality: 100,
+        name: "B15_B35_Scores_$currentTime",
+      );
+      print("Image saved to gallery: $result");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("保存成功"))
+      );
+    } catch (e) {
+      print("Error saving image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("保存失败（$e）"))
+      );
+    }
   }
 
-  Future<void> _generateAndSaveImage() async {
+  Future<void> _generateAndSaveImage(BuildContext context) async {
     try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("正在保存"))
+      );
+      
       RenderRepaintBoundary boundary = combinedKey.currentContext!
           .findRenderObject() as RenderRepaintBoundary;
       ui.Image image =
@@ -33,7 +51,7 @@ class LxB50ExportView extends StatelessWidget {
           await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-      await _saveToGallery(pngBytes);
+      await _saveToGallery(pngBytes, context);
     } catch (e) {
       print("Error generating or saving image: $e");
     }
