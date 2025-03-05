@@ -254,9 +254,9 @@ class _LxSyncPageState extends State<LxSyncPage> {
   }
 
   void _goToSystemWifiSettings() async {
-    failToOpenSystemWifiSettings() => {
+    void _failToOpenSystemWifiSettings() {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("无法打开系统WiFi设置")))
+          .showSnackBar(SnackBar(content: Text("无法打开系统 WiFi 设置")))
     };
 
     const IOSUrl = "App-Prefs:root=WIFI";
@@ -265,16 +265,16 @@ class _LxSyncPageState extends State<LxSyncPage> {
       try {
         await intent.launch();
       } catch (e) {
-        failToOpenSystemWifiSettings();
+        _failToOpenSystemWifiSettings();
       }
     } else if (Platform.isIOS) {
       try {
         await launchUrlString(IOSUrl);
       } catch (e) {
-        failToOpenSystemWifiSettings();
+        _failToOpenSystemWifiSettings();
       }
     } else {
-      failToOpenSystemWifiSettings();
+      _failToOpenSystemWifiSettings();
     }
   }
 
