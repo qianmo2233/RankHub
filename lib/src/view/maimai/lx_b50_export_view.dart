@@ -73,7 +73,7 @@ class LxB50ExportView extends StatelessWidget {
           actions: [
             IconButton(
               icon: Icon(Icons.save),
-              onPressed: _generateAndSaveImage,
+              onPressed: () => _generateAndSaveImage(context),
             ),
           ],
         ),
