@@ -254,28 +254,19 @@ class _LxSyncPageState extends State<LxSyncPage> {
   }
 
   void _goToSystemWifiSettings() async {
-    void _failToOpenSystemWifiSettings() {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("无法打开系统 WiFi 设置")))
-    };
-
     const IOSUrl = "App-Prefs:root=WIFI";
     const AndroidIntent intent = AndroidIntent(action: "android.settings.WIFI_SETTINGS");
     if (Platform.isAndroid) {
       try {
         await intent.launch();
-      } catch (e) {
-        _failToOpenSystemWifiSettings();
-      }
-    } else if (Platform.isIOS) {
-      try {
-        await launchUrlString(IOSUrl);
-      } catch (e) {
-        _failToOpenSystemWifiSettings();
-      }
-    } else {
-      _failToOpenSystemWifiSettings();
+        return;
+      } catch (e) {}
+    } else if (Platform.isIOS && (await canLaunchUrlString(IOSUrl))) {
+      await launchUrlString(IOSUrl);
+      return;
     }
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("无法打开系统 WiFi 设置")));
   }
 
   void _goToWeChat() async {
