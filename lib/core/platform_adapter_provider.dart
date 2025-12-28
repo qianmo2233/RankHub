@@ -1,8 +1,8 @@
+import 'package:rank_hub/core/account.dart';
 import 'package:rank_hub/core/game_id.dart';
 import 'package:rank_hub/core/platform_adapter.dart';
 import 'package:rank_hub/core/platform_id.dart';
 import 'package:rank_hub/core/resource_key.dart';
-import 'package:rank_hub/models/account/account.dart';
 
 /// 平台适配器基础实现
 /// 提供通用的平台适配逻辑

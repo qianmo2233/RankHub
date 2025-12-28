@@ -1,7 +1,7 @@
+import 'package:rank_hub/core/account.dart';
 import 'package:rank_hub/core/game_id.dart';
 import 'package:rank_hub/core/platform_id.dart';
 import 'package:rank_hub/core/resource_key.dart';
-import 'package:rank_hub/models/account/account.dart';
 
 abstract class PlatformAdapter {
   PlatformId get id;

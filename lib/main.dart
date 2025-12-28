@@ -1,5 +1,6 @@
 import 'package:amap_map/amap_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:rank_hub/routes/app_pages.dart';
 import 'package:rank_hub/routes/app_routes.dart';
@@ -10,6 +11,11 @@ import 'package:rank_hub/services/mai_party_qr_handler.dart';
 import 'package:rank_hub/services/mai_net_qr_handler.dart';
 import 'package:rank_hub/services/queue_status_manager.dart';
 import 'package:rank_hub/services/live_activity_service.dart';
+import 'package:rank_hub/core/core_provider.dart';
+import 'package:rank_hub/games/maimai/maimai.dart';
+import 'package:rank_hub/games/maimai/maimai_data_definitions.dart';
+import 'package:rank_hub/platform/lxns/lxns_platform.dart';
+import 'package:rank_hub/platform/lxns/lxns_platform_adapter.dart';
 import 'package:x_amap_base/x_amap_base.dart';
 
 void main() async {
@@ -18,6 +24,39 @@ void main() async {
   // 初始化日志服务
   final logService = LogService.instance;
   logService.initialize();
+
+  // 初始化 Core 架构
+  final coreProvider = CoreProvider.instance;
+  await coreProvider.initialize();
+  print('✅ Core 架构初始化完成');
+
+  // 注册 Maimai 游戏
+  final maimaiGame = Maimai();
+  coreProvider.gameRegistry.registerGame(maimaiGame);
+  print('✅ 注册游戏: ${maimaiGame.name}');
+
+  // 注册 LXNS 平台
+  final lxnsPlatform = LxnsPlatform();
+  coreProvider.platformRegistry.registerPlatform(lxnsPlatform);
+  print('✅ 注册平台: ${lxnsPlatform.name}');
+
+  // 关联 LXNS 平台与 Maimai 游戏
+  coreProvider.platformGameRegistry.associate(lxnsPlatform.id, maimaiGame.id);
+  print('✅ 关联平台与游戏: ${lxnsPlatform.name} <-> ${maimaiGame.name}');
+
+  // 注册 LXNS 平台适配器
+  final lxnsAdapter = LxnsPlatformAdapter();
+  coreProvider.adapterRegistry.registerAdapter(lxnsAdapter);
+  print('✅ 注册平台适配器: LXNS');
+
+  // 注册 Maimai 资源定义
+  coreProvider.resourceRegistry.registerResources([
+    MaimaiSongListResource(),
+    MaimaiVersionListResource(),
+    MaimaiGenreListResource(),
+    MaimaiScoreListResource(),
+  ]);
+  print('✅ 注册 Maimai 资源定义: 曲目列表、版本列表、曲风列表、成绩列表');
 
   // 初始化 Live Activities
   await LiveActivityService.instance.init();
@@ -53,14 +92,16 @@ class MyApp extends StatelessWidget {
     );
 
     return Obx(
-      () => GetMaterialApp(
-        title: 'RankHub',
-        theme: themeController.getLightTheme(),
-        darkTheme: themeController.getDarkTheme(),
-        themeMode: themeController.themeMode.value,
-        initialRoute: AppRoutes.main,
-        getPages: AppPages.routes,
-        debugShowCheckedModeBanner: false,
+      () => ProviderScope(
+        child: GetMaterialApp(
+          title: 'RankHub',
+          theme: themeController.getLightTheme(),
+          darkTheme: themeController.getDarkTheme(),
+          themeMode: themeController.themeMode.value,
+          initialRoute: AppRoutes.main,
+          getPages: AppPages.routes,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }

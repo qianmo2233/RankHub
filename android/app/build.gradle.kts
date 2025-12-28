@@ -7,6 +7,11 @@ if (keyPropertiesFile.exists()) {
     keyProperties.load(FileInputStream(keyPropertiesFile))
 }
 
+val storeFilePath = keyProperties["storeFile"] as? String
+val storePasswordValue = keyProperties["storePassword"] as? String
+val keyAliasValue = keyProperties["keyAlias"] as? String
+val keyPasswordValue = keyProperties["keyPassword"] as? String
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -36,17 +41,26 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file(keyProperties["storeFile"] as String)
-            storePassword = keyProperties["storePassword"] as String
-            keyAlias = keyProperties["keyAlias"] as String
-            keyPassword = keyProperties["keyPassword"] as String
+        if (
+            storeFilePath != null &&
+            storePasswordValue != null &&
+            keyAliasValue != null &&
+            keyPasswordValue != null
+        ) {
+            create("release") {
+                storeFile = file(storeFilePath)
+                storePassword = storePasswordValue
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             isShrinkResources = false
         }

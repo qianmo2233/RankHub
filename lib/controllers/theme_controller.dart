@@ -8,6 +8,7 @@ class ThemeController extends GetxController {
 
   final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
   final Rx<Color> seedColor = Colors.blue.obs;
+  final RxBool forceUseDark = false.obs; // 强制使用暗色主题标志
 
   @override
   void onInit() {
@@ -35,10 +36,22 @@ class ThemeController extends GetxController {
   /// 设置主题模式
   Future<void> setThemeMode(ThemeMode mode) async {
     themeMode.value = mode;
-    Get.changeThemeMode(mode);
+    if (!forceUseDark.value) {
+      Get.changeThemeMode(mode);
+    }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_themeModeKey, mode.index);
+  }
+
+  /// 强制使用暗色主题（用于特殊页面如社区页）
+  void setForceUseDark(bool force) {
+    forceUseDark.value = force;
+    if (force) {
+      Get.changeThemeMode(ThemeMode.dark);
+    } else {
+      Get.changeThemeMode(themeMode.value);
+    }
   }
 
   /// 设置主题色

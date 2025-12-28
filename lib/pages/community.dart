@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -13,43 +14,83 @@ class _CommunityPageState extends State<CommunityPage> {
   int _currentCarouselIndex = 0;
   final CarouselSliderController _carouselController =
       CarouselSliderController();
+  double _carouselProgress = 0.0;
+  Timer? _progressTimer;
+  static const _autoPlayDuration = 10000; // 10秒
 
   // 轮播图数据
   final List<Map<String, String>> _carouselItems = [
     {
-      'image': 'assets/images/banner1.png',
+      'image': 'assets/images/rh.png',
+      'category': '社区公告',
       'title': '欢迎来到社区',
+      'subtitle': '与全国玩家一起交流游戏心得',
       'color': '0xFF6366F1',
     },
     {
-      'image': 'assets/images/banner2.png',
-      'title': '分享你的游戏成绩',
+      'image': 'assets/images/arcaea.jpg',
+      'category': '限时活动',
+      'title': 'Arcaea 更新',
+      'subtitle': '6.11.2版本来了！在接下来的一个月，参与“World Parallel”活动获取三个全新限时搭档吧！',
       'color': '0xFFEC4899',
     },
     {
-      'image': 'assets/images/banner3.png',
-      'title': '与玩家交流心得',
+      'image': 'assets/images/musedash.png',
+      'category': '联动预告',
+      'title': 'Muse Dash 二次联动',
+      'subtitle': 'Muse Dash × HARDCORE TANO*C 二次联动决定',
       'color': '0xFF8B5CF6',
     },
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _startProgressTimer();
+  }
+
+  @override
+  void dispose() {
+    _progressTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _carouselProgress = 0.0;
+    const updateInterval = 16; // ~60fps
+    _progressTimer = Timer.periodic(
+      const Duration(milliseconds: updateInterval),
+      (timer) {
+        if (mounted) {
+          setState(() {
+            _carouselProgress += updateInterval / _autoPlayDuration;
+            if (_carouselProgress > 1.0) {
+              _carouselProgress = 1.0;
+            }
+          });
+        }
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('社区'),
         titleSpacing: 24,
         centerTitle: false,
+        shadowColor: Colors.transparent,
+        backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
             // 轮播图
             _buildCarousel(),
-
-            const SizedBox(height: 24),
 
             // 社区功能区
             Padding(
@@ -76,23 +117,23 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildCarousel() {
-    return Column(
+    return Stack(
       children: [
         CarouselSlider(
           carouselController: _carouselController,
           options: CarouselOptions(
-            height: 180,
+            height: MediaQuery.of(context).size.height * 0.7,
             autoPlay: true,
-            autoPlayInterval: const Duration(seconds: 3),
+            autoPlayInterval: const Duration(seconds: 10),
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
             autoPlayCurve: Curves.fastOutSlowIn,
-            enlargeCenterPage: true,
-            enlargeFactor: 0.2,
-            viewportFraction: 0.9,
+            enlargeCenterPage: false,
+            viewportFraction: 1.0,
             onPageChanged: (index, reason) {
               setState(() {
                 _currentCarouselIndex = index;
               });
+              _startProgressTimer();
             },
           ),
           items: _carouselItems.map((item) {
@@ -100,37 +141,11 @@ class _CommunityPageState extends State<CommunityPage> {
               builder: (BuildContext context) {
                 return Container(
                   width: MediaQuery.of(context).size.width,
-                  margin: const EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(int.parse(item['color']!)),
-                        Color(int.parse(item['color']!)).withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.image_outlined,
-                          size: 60,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          item['title']!,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    borderRadius: BorderRadius.circular(0),
+                    image: DecorationImage(
+                      image: AssetImage(item['image']!),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 );
@@ -138,25 +153,142 @@ class _CommunityPageState extends State<CommunityPage> {
             );
           }).toList(),
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: _carouselItems.asMap().entries.map((entry) {
-            return GestureDetector(
-              onTap: () => _carouselController.animateToPage(entry.key),
-              child: Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentCarouselIndex == entry.key
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).scaffoldBackgroundColor,
+                    Colors.transparent,
+                  ],
                 ),
               ),
-            );
-          }).toList(),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: Container(
+              height: 300,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: AlignmentDirectional.bottomCenter,
+                  stops: const [0.0, 0.9],
+                  colors: [
+                    Colors.transparent,
+                    Theme.of(context).scaffoldBackgroundColor,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 100,
+          left: 24,
+          right: 24,
+          child: IgnorePointer(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  alignment: Alignment.centerLeft,
+                  children: <Widget>[
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: SizedBox(
+                width: double.infinity,
+                key: ValueKey<int>(_currentCarouselIndex),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _carouselItems[_currentCarouselIndex]['category']!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _carouselItems[_currentCarouselIndex]['title']!,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _carouselItems[_currentCarouselIndex]['subtitle']!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 64,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: _carouselItems.asMap().entries.map((entry) {
+              final isActive = _currentCarouselIndex == entry.key;
+              return GestureDetector(
+                onTap: () {
+                  _carouselController.animateToPage(entry.key);
+                  _startProgressTimer();
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: isActive ? 24 : 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.white.withOpacity(0.3),
+                  ),
+                  child: isActive
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _carouselProgress,
+                            backgroundColor: Colors.transparent,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
