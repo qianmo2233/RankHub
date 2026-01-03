@@ -110,9 +110,9 @@ class SongListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     // 确保曲绘 URL 存在，如果为空则动态生成
-    final jacketUrl = song.jacketUrl.isEmpty 
+    final jacketUrl = song.jacketUrl.isEmpty
         ? 'https://assets2.lxns.net/maimai/jacket/${song.songId}.png'
         : song.jacketUrl;
 
