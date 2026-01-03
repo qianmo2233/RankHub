@@ -10,6 +10,8 @@ class LibraryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 监听 libraryProvider 以触发初始化
+    ref.watch(libraryProvider);
     final appContext = ref.watch(appContextProvider);
 
     return Scaffold(
@@ -155,9 +157,11 @@ class LibraryPage extends ConsumerWidget {
                                           )
                                         : null,
                                     selected: isSelected,
-                                    onTap: () {
-                                      notifier.selectGame(game);
-                                      Navigator.pop(context);
+                                    onTap: () async {
+                                      await notifier.selectGame(game);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
                                     },
                                   );
                                 },

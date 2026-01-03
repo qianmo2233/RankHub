@@ -9,7 +9,7 @@ abstract class GameResourceDefinition<T> {
   Duration? get ttl => null;
 
   /// 此资源依赖的其他资源，必须先加载。
-  List<ResourceKey<T>> get dependencies => const [];
+  List<ResourceKey> get dependencies => const [];
 
   /// 当触发刷新时，是否强制重新拉取数据。
   bool get forceRefreshWhenTriggered => true;

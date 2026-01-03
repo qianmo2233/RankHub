@@ -280,8 +280,9 @@ class MaimaiSong {
   String versionTitle = "";
 
   factory MaimaiSong.fromJson(Map<String, dynamic> json) {
-    return MaimaiSong(
-      songId: json['id'] as int? ?? 0,
+    final songId = json['id'] as int? ?? 0;
+    final song = MaimaiSong(
+      songId: songId,
       title: json['title'] as String? ?? '',
       artist: json['artist'] as String? ?? '',
       genre: json['genre'] as String? ?? '',
@@ -295,6 +296,11 @@ class MaimaiSong {
           ? MaimaiSongDifficulties.fromJson(json['difficulties'])
           : const MaimaiSongDifficulties(),
     );
+
+    // 设置曲绘 URL（从 LXNS API）
+    song.jacketUrl = 'https://assets2.lxns.net/maimai/jacket/$songId.png';
+
+    return song;
   }
 
   Map<String, dynamic> toJson() {

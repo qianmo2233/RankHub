@@ -24,6 +24,17 @@ class MaimaiSongListResource extends GameResourceDefinition<List<MaimaiSong>> {
     ResourceScope scope,
     List<PlatformAdapter> adapters,
   ) async {
+    // 首先尝试从数据库加载（如果未过期）
+    try {
+      final cachedSongs = await MaimaiIsarService.instance.getAllSongs();
+      if (cachedSongs.isNotEmpty) {
+        print('✅ 从数据库加载 ${cachedSongs.length} 首曲目（缓存）');
+        return cachedSongs;
+      }
+    } catch (e) {
+      print('⚠️ 从数据库加载失败: $e，将从网络获取');
+    }
+
     // 找到支持该游戏的平台适配器
     final adapter = adapters.firstWhere(
       (a) => a.supports(scope.gameId),
@@ -43,9 +54,16 @@ class MaimaiSongListResource extends GameResourceDefinition<List<MaimaiSong>> {
 
   @override
   List<MaimaiSong>? loadCache() {
-    // loadCache 是同步方法，但 Isar 是异步的
-    // 返回 null 让加载器使用 fetch 方法
-    return null;
+    // 尝试从数据库同步加载缓存
+    // 注意：Isar 是异步的，这里可能返回 null
+    // 在实际应用中，ResourceLoader 会在缓存未命中时调用 fetch
+    try {
+      // 由于 Isar 是异步的，这里无法同步获取数据
+      // 返回 null，让系统通过 fetch 从网络或数据库异步加载
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override

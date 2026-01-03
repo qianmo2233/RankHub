@@ -14,6 +14,7 @@ class ResourceLoader {
   final Map<ResourceKey, ResourceState> _state = {};
   final Map<ResourceKey, Future> _inflight = {};
   final Set<ResourceKey> _loadingStack = {}; // 用于检测循环依赖
+  final Set<ResourceKey> _isForceRefreshing = {}; // 标记正在强制刷新的资源
 
   ResourceLoader({
     required this.registry,
@@ -24,6 +25,11 @@ class ResourceLoader {
   /// 强制加载（如果未加载或已过期）
   /// 如果数据已加载且未过期，直接返回缓存数据
   Future<T> load<T>(ResourceKey key) async {
+    // 已在加载中 - 返回等待中的 Future
+    if (_inflight.containsKey(key)) {
+      return await _inflight[key] as T;
+    }
+
     // 检测循环依赖
     if (_loadingStack.contains(key)) {
       throw Exception(
@@ -40,11 +46,6 @@ class ResourceLoader {
         return existing.value;
       }
       // 已过期，需要重新加载
-    }
-
-    // 已在加载中
-    if (_inflight.containsKey(key)) {
-      return await _inflight[key] as T;
     }
 
     final def = registry.find<T>(key);
@@ -105,8 +106,16 @@ class ResourceLoader {
       _inflight.remove(key);
     }
 
-    // 重新加载
-    return load<T>(key);
+    // 标记为强制刷新
+    _isForceRefreshing.add(key);
+
+    try {
+      // 重新加载
+      return await load<T>(key);
+    } finally {
+      // 清除强制刷新标记
+      _isForceRefreshing.remove(key);
+    }
   }
 
   /// 批量加载多个资源（按照 DAG 拓扑排序）
@@ -213,16 +222,22 @@ class ResourceLoader {
       return false; // 没有 TTL，永不过期
     }
 
-    if (!scope.hasAccount) {
-      return true; // 没有账号，认为已过期
+    // 对于不依赖账号的资源，游客模式下也应该检查过期状态
+    if (!scope.hasAccount && def.accountRelated) {
+      return true; // 依赖账号但没有账号，认为已过期
     }
 
     // 从数据库检查过期状态
     try {
+      // 对于不依赖账号的资源，使用游戏ID作为标识
+      final accountIdentifier = scope.hasAccount
+          ? scope.accountIdentifier!
+          : 'guest_${scope.gameId.value}';
+
       final isExpired = await ResourceCacheService.instance.isExpired(
         resourceKey: key,
         platformId: scope.platformId.value,
-        accountIdentifier: scope.accountIdentifier!,
+        accountIdentifier: accountIdentifier,
       );
       return isExpired;
     } catch (e) {
@@ -239,13 +254,16 @@ class ResourceLoader {
     final ttl = def.ttl;
     if (ttl == null) return; // 没有 TTL 的资源不记录
 
-    if (!scope.hasAccount) return; // 没有账号，不记录
-
     try {
+      // 对于不依赖账号的资源，使用游戏ID作为标识
+      final accountIdentifier = scope.hasAccount
+          ? scope.accountIdentifier!
+          : 'guest_${scope.gameId.value}';
+
       await ResourceCacheService.instance.recordLoad(
         resourceKey: key,
         platformId: scope.platformId.value,
-        accountIdentifier: scope.accountIdentifier!,
+        accountIdentifier: accountIdentifier,
         ttlSeconds: ttl.inSeconds,
         isAccountRelated: def.accountRelated,
       );
@@ -274,7 +292,11 @@ class ResourceLoader {
     _state[key] = const AsyncLoading();
 
     try {
-      if (!def.forceRefreshWhenTriggered) {
+      // 检查是否处于强制刷新状态
+      final isForceRefresh = _isForceRefreshing.contains(key);
+
+      // 只有在非强制刷新且 forceRefreshWhenTriggered 为 false 时才使用本地缓存
+      if (!isForceRefresh && !def.forceRefreshWhenTriggered) {
         // 本地缓存
         final cached = def.loadCache();
         if (cached != null) {

@@ -180,8 +180,8 @@ class CoreProvider {
       if (account != null) {
         await _buildAppContext(game, account, ref);
       } else {
-        // 游客模式
-        ref.read(appContextProvider.notifier).clear();
+        // 游客模式 - 构建没有账号的 AppContext
+        await _buildGuestAppContext(game, ref);
       }
     } catch (e) {
       print('⚠️ 设置当前游戏失败: $e');
@@ -344,6 +344,30 @@ class CoreProvider {
       );
     } catch (e) {
       print('⚠️ 构建应用上下文失败: $e');
+    }
+  }
+
+  /// 构建游客模式的应用上下文（无账号）
+  Future<void> _buildGuestAppContext(Game game, Ref ref) async {
+    try {
+      final adapters = adapterRegistry.getAllAdapters();
+
+      ref
+          .read(appContextProvider.notifier)
+          .buildContext(
+            game: game,
+            account: null,
+            adapters: adapters,
+            loaderFactory: (scope, adapters) => ResourceLoader(
+              registry: resourceRegistry,
+              scope: scope,
+              adapters: adapters,
+            ),
+          );
+
+      print('✨ 已重建 AppContext（游客模式）: ${game.id.value}');
+    } catch (e) {
+      print('⚠️ 构建游客模式应用上下文失败: $e');
     }
   }
 

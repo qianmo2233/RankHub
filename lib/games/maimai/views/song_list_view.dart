@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rank_hub/core/resource_provider.dart';
-import 'package:rank_hub/games/maimai/maimai_resources.dart';
+import 'package:rank_hub/games/maimai/maimai_providers.dart';
 import 'package:rank_hub/games/maimai/models/maimai_song.dart';
 import 'package:rank_hub/games/maimai/widgets/song_list_item.dart';
 
@@ -10,27 +9,23 @@ class SongListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final resourceState = ref.watch(
-      resourceProviderOf<List<MaimaiSong>>(maimaiSongListResourceKey),
-    );
+    final resourceState = ref.watch(maimaiSongListProvider);
 
     return switch (resourceState) {
-      AsyncData<List<MaimaiSong>> data => RefreshIndicator(
+      AsyncData<List<MaimaiSong>>(:final value) => RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(maimaiSongListProvider.notifier).refresh();
+        },
         child: ListView.builder(
-          itemCount: data.value.length,
+          itemCount: value.length,
           itemBuilder: (context, index) {
-            final song = data.value[index];
+            final song = value[index];
             return SongListItem(song: song);
           },
         ),
-        onRefresh: () async {
-          ref.refresh(
-            resourceProviderOf<List<MaimaiSong>>(maimaiSongListResourceKey),
-          );
-        },
       ),
       AsyncLoading() => const Center(child: CircularProgressIndicator()),
-      AsyncError(error: var error, stackTrace: var stackTrace) => Center(
+      AsyncError(:final error) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -41,14 +36,10 @@ class SongListView extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.red),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextButton(
-              onPressed: () {
-                ref.refresh(
-                  resourceProviderOf<List<MaimaiSong>>(
-                    maimaiSongListResourceKey,
-                  ),
-                );
+              onPressed: () async {
+                await ref.read(maimaiSongListProvider.notifier).refresh();
               },
               child: const Text('重试'),
             ),

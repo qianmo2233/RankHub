@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:get/get.dart';
 import 'package:rank_hub/games/maimai/models/enums/level_index.dart';
 import 'package:rank_hub/games/maimai/models/maimai_song.dart';
+import 'package:rank_hub/games/maimai/views/difficulty_detail_page.dart';
 
 class SongListItem extends StatelessWidget {
   final MaimaiSong song;
@@ -109,6 +110,11 @@ class SongListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    
+    // 确保曲绘 URL 存在，如果为空则动态生成
+    final jacketUrl = song.jacketUrl.isEmpty 
+        ? 'https://assets2.lxns.net/maimai/jacket/${song.songId}.png'
+        : song.jacketUrl;
 
     return Card(
       elevation: 0,
@@ -124,7 +130,7 @@ class SongListItem extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: CachedNetworkImage(
-              imageUrl: song.jacketUrl,
+              imageUrl: jacketUrl,
               fit: BoxFit.cover,
               placeholder: (context, url) => Center(
                 child: SizedBox(
@@ -136,8 +142,15 @@ class SongListItem extends StatelessWidget {
                   ),
                 ),
               ),
-              errorWidget: (context, url, error) =>
-                  Icon(Icons.music_note, color: colorScheme.onPrimaryContainer),
+              errorWidget: (context, url, error) {
+                print('❌ 曲绘加载失败 [${song.songId}] ${song.title}');
+                print('   URL: $url');
+                print('   错误: $error');
+                return Icon(
+                  Icons.music_note,
+                  color: colorScheme.onPrimaryContainer,
+                );
+              },
             ),
           ),
         ),
@@ -170,7 +183,35 @@ class SongListItem extends StatelessWidget {
           color: colorScheme.onSurfaceVariant,
         ),
         onTap: () {
-          context.go('/maimai/song/${song.songId}');
+          // 使用 GetX 导航到详情页
+          // 选择默认难度：优先选择 DX 谱面的最高难度，否则选择 Standard 谱面的最高难度
+          dynamic defaultDifficulty;
+
+          if (song.difficulties.dx.isNotEmpty) {
+            // DX 谱面存在，选择最高难度
+            final dxDiffs = List.from(song.difficulties.dx);
+            dxDiffs.sort(
+              (a, b) => b.difficulty.value.compareTo(a.difficulty.value),
+            );
+            defaultDifficulty = dxDiffs.first;
+          } else if (song.difficulties.standard.isNotEmpty) {
+            // 只有 Standard 谱面，选择最高难度
+            final standardDiffs = List.from(song.difficulties.standard);
+            standardDiffs.sort(
+              (a, b) => b.difficulty.value.compareTo(a.difficulty.value),
+            );
+            defaultDifficulty = standardDiffs.first;
+          }
+
+          if (defaultDifficulty != null) {
+            Get.to(
+              () => DifficultyDetailPage(
+                difficulty: defaultDifficulty,
+                songName: song.title,
+                songId: song.songId,
+              ),
+            );
+          }
         },
       ),
     );

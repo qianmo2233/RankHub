@@ -8,14 +8,19 @@ import 'package:rank_hub/core/models/account_entity.dart';
 /// 使用 CoreContext 进行状态管理
 class LibraryNotifier extends Notifier<void> {
   final CoreProvider _service = CoreProvider.instance;
+  bool _initialized = false;
+  Future<void>? _initializeFuture;
 
   @override
   void build() {
-    _initialize();
+    // 确保初始化只执行一次
+    _initializeFuture ??= _initialize();
   }
 
   /// 初始化
   Future<void> _initialize() async {
+    if (_initialized) return;
+
     try {
       // 确保服务已初始化
       await _service.initialize();
@@ -31,6 +36,8 @@ class LibraryNotifier extends Notifier<void> {
         // 通过 CoreProvider 的副作用方法设置游戏，会自动更新 CoreContext
         await _service.setCurrentGame(selectedGame, ref);
       }
+
+      _initialized = true;
     } catch (e) {
       print('初始化失败: $e');
     }
@@ -43,7 +50,7 @@ class LibraryNotifier extends Notifier<void> {
       // 会自动保存选择、加载账号并更新 CoreContext
       await _service.setCurrentGame(game, ref);
     } catch (e) {
-      print('选择游戏失败: $e');
+      print('❗ 选择游戏失败: $e');
     }
   }
 

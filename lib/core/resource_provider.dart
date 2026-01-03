@@ -33,18 +33,37 @@ import 'package:rank_hub/core/resource_key.dart';
 /// ```
 FutureProvider<T> resourceProviderOf<T>(ResourceKey<T> key) {
   return FutureProvider.autoDispose<T>((ref) async {
+    print('🎯 [${key.fullKey}] Provider 开始执行');
+
+    // 保持 Provider 存活，防止自动释放后立即重新创建
+    ref.keepAlive();
+
     // 获取当前的 AppContext
     // 监听 appContextProvider,当账号切换时会自动触发重建
     final appContext = ref.watch(appContextProvider);
+    print(
+      '🔍 [${key.fullKey}] AppContext: ${appContext?.game.name} (hashCode: ${appContext.hashCode})',
+    );
 
     if (appContext == null) {
+      print('⚠️ [${key.fullKey}] AppContext 为 null');
       throw Exception('AppContext 未初始化,无法加载资源');
     }
 
-    // 通过 ResourceLoader 加载资源
-    // 如果资源标记为 accountRelated,账号切换时会自动失效
-    final result = await appContext.load(key);
-    return result as T;
+    try {
+      // 通过 ResourceLoader 加载资源
+      // 如果资源标记为 accountRelated,账号切换时会自动失效
+      print('📞 [${key.fullKey}] 调用 appContext.load');
+      final result = await appContext.load(key);
+      print(
+        '✨ [${key.fullKey}] Provider 加载完成，返回结果 (数据类型: ${result.runtimeType})',
+      );
+      return result as T;
+    } catch (e) {
+      // 避免错误不断重试导致刷屏
+      print('⚠️ 资源加载失败 [${key.fullKey}]: $e');
+      rethrow;
+    }
   });
 }
 
